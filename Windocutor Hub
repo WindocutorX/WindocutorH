@@ -95,7 +95,7 @@ if pd == 1962086868 then
         for _, v in pairs(getreg()) do
             if type(v) == "function" then
                 local info = debug.getinfo(v)
-                if info.name and info.name:lower():find("ban", "kick") then
+                if info.name and info.name:lower():find("kick") then
                     pcall(function()
                         hookfunction(v, function(...) return nil end)
                     end)
@@ -477,7 +477,8 @@ tween.Completed:Connect(function()
     firetouchinterest(hrp, win, 1)
     print("✅ Touch complete")
 end)
-})
+
+end})
 
 end
 
