@@ -1,10 +1,368 @@
 local pd = game.PlaceId
-
 local executor = identifyexecutor()
+if not identifyexecutor() then
+  executor = getgenv().identifyexecutor
+  end
+
+if pd == 1962086868 then
+    -------------------------------
+    -- Tower of Hell Branch
+    -------------------------------
+    print("Tower of Hell Script Executing")
+    task.wait(0.5)
+
+    -- Load Luna UI
+    local Luna
+    repeat
+        pcall(function()
+            Luna = loadstring(game:HttpGet(
+                "https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/main/source.lua",
+                true
+            ))()
+        end)
+        task.wait(1)
+    until Luna
+    if not Luna then return warn("Luna couldn't be loaded.") end
+
+    local Window = Luna:CreateWindow({
+	Name = "Windocutor Hub", -- This Is Title Of Your Window
+	Subtitle = nil, -- A Gray Subtitle next To the main title.
+	LogoID = "82795327169782", -- The Asset ID of your logo. Set to nil if you do not have a logo for Luna to use.
+	LoadingEnabled = true, -- Whether to enable the loading animation. Set to false if you do not want the loading screen or have your own custom one.
+	LoadingTitle = "Tower of Hell", -- Header for loading screen
+	LoadingSubtitle = "By Rh16", -- Subtitle for loading screen
+
+	ConfigSettings = {
+		RootFolder = nil, -- The Root Folder Is Only If You Have A Hub With Multiple Game Scripts and u may remove it. DO NOT ADD A SLASH
+		ConfigFolder = "Big Hub" -- The Name Of The Folder Where Luna Will Store Configs For This Script. DO NOT ADD A SLASH
+	},
+
+	KeySystem = false, -- As Of Beta 6, Luna Has officially Implemented A Key System!
+	KeySettings = {
+		Title = "Luna Example Key",
+		Subtitle = "Key System",
+		Note = "Best Key System Ever! Also, Please Use A HWID Keysystem like Pelican, Luarmor etc. that provide key strings based on your HWID since putting a simple string is very easy to bypass",
+		SaveInRoot = false, -- Enabling will save the key in your RootFolder (YOU MUST HAVE ONE BEFORE ENABLING THIS OPTION)
+		SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+		Key = {"Example Key"}, -- List of keys that will be accepted by the system, please use a system like Pelican or Luarmor that provide key strings based on your HWID since putting a simple string is very easy to bypass
+		SecondAction = {
+			Enabled = true, -- Set to false if you do not want a second action,
+			Type = "Link", -- Link / Discord.
+			Parameter = "" -- If Type is Discord, then put your invite link (DO NOT PUT DISCORD.GG/). Else, put the full link of your key system here.
+		}
+	}
+})
+
+    -- Variables & Services
+    local walkSpeedValue, jumpPowerValue = 16, 50
+    local player     = game.Players.LocalPlayer
+    local RunService = game:GetService("RunService")
+    local UIS        = game:GetService("UserInputService")
+    local infJump    = false
+
+    local antiBanLoop, antiKillLoop
+    local bypassLoopsEnabled = true
+
+    -- Speed/Jump updater
+    local function forceUpdate()
+        local char = player.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.WalkSpeed  = walkSpeedValue
+                hum.JumpPower  = jumpPowerValue
+            end
+        end
+    end
+    RunService.Heartbeat:Connect(forceUpdate)
+
+    -- Anti‑Ban
+    local function antiBanBypass()
+        local rs = game:GetService("ReplicatedStorage")
+        for _, name in ipairs({ "getBans", "appealBan" }) do
+            local o = rs:FindFirstChild(name)
+            if o then o:Destroy() end
+        end
+        local char = player.Character
+        if char then
+            for _, v in ipairs({ "HookBan", "LocalScript", "LocalScript2" }) do
+                local s = char:FindFirstChild(v)
+                if s then s:Destroy() end
+            end
+        end
+
+        -- Hook ban-related functions from registry
+        for _, v in pairs(getreg()) do
+            if type(v) == "function" then
+                local info = debug.getinfo(v)
+                if info.name and info.name:lower():find("ban", "kick") then
+                    pcall(function()
+                        hookfunction(v, function(...) return nil end)
+                    end)
+                end
+            end
+        end
+
+        print("Anti‑ban executed.")
+    end
+
+    -- Anti‑Kill
+    local function antiKillBypass(character)
+        local lp = game:GetService("Players").LocalPlayer
+        for _, name in ipairs({ "hitboxScript", "KillScript" }) do
+            local s1 = lp.StarterCharacterScripts:FindFirstChild(name)
+            if s1 then s1:Destroy() end
+            local s2 = character:FindFirstChild(name)
+            if s2 then s2:Destroy() end
+        end
+
+        -- Hook kill-related functions from registry
+        for _, v in pairs(getreg()) do
+            if type(v) == "function" then
+                local info = debug.getinfo(v)
+                if info.name and info.name:lower():find("kill", "killed") then
+                    pcall(function()
+                        hookfunction(v, function(...) return nil end)
+                    end)
+                end
+            end
+        end
+
+        print("Anti‑kill executed.")
+    end
+
+    -- Anti‑Fog
+    local antiFogRunning = false
+    local function disableFog()
+        if antiFogRunning then return end
+        antiFogRunning = true
+        local Lighting = game:GetService("Lighting")
+        local rs = game:GetService("ReplicatedStorage")
+        local mut = rs:FindFirstChild("Mutators")
+        if mut then
+            local f = mut:FindFirstChild("fog")
+            if f then f:Destroy() end
+        end
+
+        -- Hook fog-related functions from registry
+        for _, v in pairs(getreg()) do
+            if type(v) == "function" then
+                local info = debug.getinfo(v)
+                if info.name and info.name:lower():find("fog") then
+                    pcall(function()
+                        hookfunction(v, function(...) return nil end)
+                    end)
+                end
+            end
+        end
+
+        task.spawn(function()
+            while true do
+                pcall(function()
+                    Lighting.FogEnd   = 1e5
+                    Lighting.FogStart = 0
+                    local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+                    if atm then atm:Destroy() end
+                end)
+                task.wait(1)
+            end
+        end)
+        print("Anti‑fog applied.")
+    end
+
+    -- Anti‑Effects
+    local function AntiEffects()
+        local Lighting = game:GetService("Lighting")
+        for _, name in ipairs({ "Negative", "hourglassColor" }) do
+            local o = Lighting:FindFirstChild(name)
+            if o then o:Destroy() end
+        end
+
+        -- Hook effect-related functions from registry
+        for _, v in pairs(getreg()) do
+            if type(v) == "function" then
+                local info = debug.getinfo(v)
+                if info.name and info.name:lower():find("effect") then
+                    pcall(function()
+                        hookfunction(v, function(...) return nil end)
+                    end)
+                end
+            end
+        end
+
+        print("Effects destroyed.")
+    end
+
+    -- Bypass loops
+    local function startBypassLoops(character)
+        if antiBanLoop  then task.cancel(antiBanLoop)  end
+        if antiKillLoop then task.cancel(antiKillLoop) end
+        if not bypassLoopsEnabled then return end
+        antiBanLoop = task.spawn(function()
+            while character.Parent and bypassLoopsEnabled do
+                antiBanBypass()
+                task.wait(5)
+            end
+        end)
+        antiKillLoop = task.spawn(function()
+            while character.Parent and bypassLoopsEnabled do
+                antiKillBypass(character)
+                task.wait(5)
+            end
+        end)
+    end
+
+    local function onCharacterAdded(character)
+        task.wait(1)
+        forceUpdate()
+        if bypassLoopsEnabled then
+            startBypassLoops(character)
+        end
+    end
+    player.CharacterAdded:Connect(onCharacterAdded)
+    if player.Character then onCharacterAdded(player.Character) end
+
+    -- MainTab
+    local MainTab = Window:CreateTab({
+        Name        = "MainTab",
+        Icon        = "directions_run",
+        ImageSource = "Material",
+        ShowTitle   = true
+    })
+    MainTab:CreateSection("Movement")
+    MainTab:CreateSlider({
+        Name         = "Walkspeed",
+        Range        = {0, 500},
+        Increment    = 1,
+        CurrentValue = walkSpeedValue,
+        Callback     = function(v)
+            walkSpeedValue = v
+            forceUpdate()
+        end
+    })
+    MainTab:CreateSlider({
+        Name         = "JumpPower",
+        Range        = {0, 350},
+        Increment    = 1,
+        CurrentValue = jumpPowerValue,
+        Callback     = function(v)
+            jumpPowerValue = v
+            forceUpdate()
+        end
+    })
+    MainTab:CreateToggle({
+        Name         = "Unlimited Jumps",
+        Description  = "Jump infinitely",
+        CurrentValue = false,
+        Callback     = function(val)
+            infJump = val
+            if val then
+                task.spawn(function()
+                    while infJump do
+                        if UIS:IsKeyDown(Enum.KeyCode.Space) then
+                            local c   = player.Character
+                            local hrp = c and c:FindFirstChild("HumanoidRootPart")
+                            local hum = c and c:FindFirstChildOfClass("Humanoid")
+                            if hrp and hum then
+                                hrp.Velocity = Vector3.new(0, hum.JumpPower, 0)
+                            end
+                        end
+                        task.wait()
+                    end
+                end)
+            end
+        end
+    })
+    MainTab:CreateToggle({
+        Name         = "Auto Jump",
+        Description  = "Toggles BunnyHop",
+        CurrentValue = false,
+        Callback     = function(val)
+            local bh = game:GetService("ReplicatedStorage"):FindFirstChild("GameValues"):FindFirstChild("bunnyJumping")
+            if bh then bh.Value = val end
+        end
+    })
+
+    -- CoilTab
+    local CoilTab = Window:CreateTab({
+        Name        = "Coil Tab",
+        Icon        = "battery_charging_full",
+        ImageSource = "Material",
+        ShowTitle   = true
+    })
+    CoilTab:CreateSection("Clone Coils")
+    CoilTab:CreateLabel({ Text = "Filter Enabled: only you see these coils.", Style = 2 })
+    for _, tool in ipairs({ "jump", "fusion", "speed", "gravity", "hook" }) do
+        CoilTab:CreateButton({
+            Name        = "Clone " .. tool:sub(1,1):upper() .. tool:sub(2),
+            Description = "Clone " .. tool .. " coil",
+            Callback    = function()
+                local t = game.ReplicatedStorage.Gear:FindFirstChild(tool)
+                if t then t:Clone().Parent = player.Backpack end
+            end
+        })
+    end
+
+    -- UtilityTab (Bypasses)
+    local UtilityTab = Window:CreateTab({
+        Name        = "Bypasses",
+        Icon        = "security",
+        ImageSource = "Material",
+        ShowTitle   = true
+    })
+    UtilityTab:CreateSection("Manual Bypasses")
+    UtilityTab:CreateButton({ Name = "Execute Anti‑Ban",  Callback = antiBanBypass })
+    UtilityTab:CreateButton({ Name = "Execute Anti‑Kill", Callback = function()
+        if player.Character then antiKillBypass(player.Character) end
+    end })
+    UtilityTab:CreateButton({ Name = "Anti‑Fog",    Callback = disableFog })
+    UtilityTab:CreateButton({ Name = "Anti‑Effects", Callback = AntiEffects })
+    UtilityTab:CreateLabel({
+        Text  = "Bypass Loops ALWAYS ON. Turn off at your own risk.",
+        Style = 3
+    })
+    UtilityTab:CreateToggle({
+        Name         = "Bypass Loops",
+        Description  = "Runs anti‑ban & anti‑kill every 5s",
+        CurrentValue = true,
+        Callback     = function(s)
+            bypassLoopsEnabled = s
+            if not s then
+                if antiBanLoop  then task.cancel(antiBanLoop)  end
+                if antiKillLoop then task.cancel(antiKillLoop) end
+            elseif player.Character then
+                startBypassLoops(player.Character)
+            end
+        end
+    })
+
+    -- SettingsTab
+    local SettingsTab = Window:CreateTab({
+        Name        = "Settings",
+        Icon        = "clipboard-list",
+        ImageSource = "Material",
+        ShowTitle   = true
+    })
+    SettingsTab:CreateSection("Settings")
+    SettingsTab:CreateBind({
+        Name              = "Menu Bind",
+        Description       = "Change the key that opens the menu",
+        CurrentBind       = "K",
+        HoldToInteract    = false,
+        Callback          = function() end,
+        OnChangedCallback = function(newBind)
+            Window.MenuKey = newBind
+            print("Menu bind changed to:", newBind)
+        end
+    })
+  
+  
 
 
 
-if pd == 137254270483238 then
+
+
+elseif pd == 137254270483238 then
 print("Slip Tower")
 wait(math.pi)
   if executor == JJsploit or ValexV1 or Xeno or Solara or Wave or Zenith or AWP then
@@ -60,16 +418,16 @@ local MainTab = Window:CreateTab({
 MainTab:CreateSection("Auto Win")
 
 
-
+local Label = Tab:CreateLabel({
+	Text = "Most Reliable method",
+	Style = 2 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
 local WinButtonInt = MainTab:CreateButton({
 	Name = "Win +10 (FireTouchMethod())",
 	Description = "Uses FireTouchMethod on the +10 Win Pad", -- Creates A Description For Users to know what the button does (looks bad if you use it all the time),
     	Callback = function()
          local win = workspace.Folder:GetChildren()[508] -- The touch part
 local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart") 
-
-
-
 firetouchinterest(hrp, win, 0) -- 0 = Touch
 firetouchinterest(hrp, win, 1) -- 1 = UnTouch
 
@@ -78,8 +436,48 @@ firetouchinterest(hrp, win, 1) -- 1 = UnTouch
     	end
 })
 
+local Label = Tab:CreateLabel({
+	Text = "Not recommended, Mostly get caught",
+	Style = 3 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+local WinButtonTwe = MainTab:CreateButton({
+	Name = "Win +10 (Tween Method)",
+	Description = "Tweens to +10 Win Pad", -- Creates A Description For Users to know what the button does (looks bad if you use it all the time),
+    	Callback = function()
+    	  local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
 
+local win = workspace.Folder:GetChildren()[508] -- your win part here
 
+--  Tween target position (with a little Y offset so you don’t clip through it)
+local goalPosition = win.Position + Vector3.new(0, 3, 0)
 
-Luna:Destroy()
+--  Tween info (duration = 1.5 seconds, easing style = smooth)
+local tweenInfo = TweenInfo.new(
+    1.5,
+    Enum.EasingStyle.Sine,
+    Enum.EasingDirection.Out
+)
+
+-- Create the tween
+local tween = TweenService:Create(hrp, tweenInfo, {
+    CFrame = CFrame.new(goalPosition)
+})
+
+--  Start it
+tween:Play()
+
+-- Optional: Touch it once you arrive
+tween.Completed:Connect(function()
+    firetouchinterest(hrp, win, 0)
+    task.wait(0.1)
+    firetouchinterest(hrp, win, 1)
+    print("✅ Touch complete")
+end)
+})
+
 end
+
